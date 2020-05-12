@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>自动部署</title>
+    <style>
+        .container {
+            width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .project-list {
+            margin: 50px auto;
+            overflow: hidden;
+        }
+        .project {
+            float: left;
+            background: #fff;
+            border: 1px solid #222;
+            width: 200px;
+            height: 100px;
+            line-height: 100px;
+            margin-right: 20px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            font-size: 22px;
+            outline: none;
+        }
+        .project:hover {
+            color: #ec7259;
+        }
+        .project.selected {
+            background: #ec7259;
+            border-color: #ec7259;
+            color: #fff;
+        }
+
+        .deploy-btn {
+            background: #fff;
+            border: 1px solid #222;
+            width: 160px;
+            height: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            outline: none;
+            transition: all .2s;
+        }
+        .deploy-btn:hover {
+            background: #222;
+            color: #fff;
+        }
+        .disabled {
+            color: #999;
+            background: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="project-list">
+            {{projectlist}}
+        </div>
+        <button id="deploy_btn" class="deploy-btn">开始部署</button>
+    </div>
+
+    <script>
+        let btn = document.querySelector('#deploy_btn')
+        btn.addEventListener('click', start)
+
+        function start () {
+            btn.textContent = '部署中...'
+            btn.classList.add('disabled')
+
+            let selected = document.querySelector('.project-list .selected')
+            if (!selected) {
+                alert('请选择项目')
+                return;
+            }
+            let params = 'path=' + selected.getAttribute('data-path');
+            request(params)
+        }
+        function fail () {
+            btn.textContent = '部署失败'
+            setTimeout(complete, 1000)
+        }
+        function success () {
+            btn.textContent = '部署OK'
+            setTimeout(complete, 1000)
+        }
+        function complete () {
+            btn.textContent = '开始部署'
+            btn.classList.remove('disabled')
+        }
+
+        document.querySelector('.project-list').addEventListener('click', function (e) {
+            let classList = e.target.classList;
+
+            if (classList.contains('project')) {
+                classList.contains('selected') ?
+                classList.remove('selected') :
+                classList.add('selected')
+            }
+        })
+
+        function request (params) {
+            let req = new XMLHttpRequest()
+            req.open('get', '/api/start?' + params)
+            req.onreadystatechange = function (res) {
+                if (res.status === 200 && res.readyState === 4) {
+                    success();
+                }
+
+                if (res.status !== 200 && res.readyState === 4) {
+                    fail(res);
+                }
+            }
+            req.send()
+        }
+    </script>
+</body>
+</html>
